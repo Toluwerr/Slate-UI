@@ -1,4 +1,6 @@
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local Slate = {}
 Slate.__index = Slate
@@ -10,9 +12,9 @@ local DEFAULTS = {
 	Position = UDim2.fromScale(0.5, 0.5),
 }
 
-local function getParent(parent)
-	if parent then
-		return parent
+local function getPlayerGui(customParent)
+	if customParent then
+		return customParent
 	end
 
 	local player = Players.LocalPlayer
@@ -23,20 +25,20 @@ local function getParent(parent)
 	return player:WaitForChild("PlayerGui")
 end
 
-local function getSize(size)
+local function makeSize(size)
 	if size == nil then
-		return UDim2.fromOffset(DEFAULTS.Size[1], DEFAULTS.Size[2])
+		size = DEFAULTS.Size
 	end
 
 	if type(size) ~= "table" then
-		error("Slate Size must use {width, height}, for example: {700, 480}")
+		error("Slate Size must use {width, height}. Example: {700, 480}")
 	end
 
 	local width = size[1]
 	local height = size[2]
 
-	if type(width) ~= "number" or type(height) ~= "number" or width <= 0 or height <= 0 then
-		error("Slate Size values must be positive numbers, for example: {700, 480}")
+	if type(width) ~= "number" or type(height) ~= "number" then
+		error("Slate Size values must be numbers. Example: {700, 480}")
 	end
 
 	return UDim2.fromOffset(width, height)
@@ -45,30 +47,30 @@ end
 function Slate:CreateWindow(options)
 	options = options or {}
 
+	local parent = getPlayerGui(options.Parent)
 	local name = options.Name or DEFAULTS.Name
-	local parent = getParent(options.Parent)
 
-	local existing = parent:FindFirstChild(name)
-	if existing then
-		existing:Destroy()
+	local oldGui = parent:FindFirstChild(name)
+	if oldGui then
+		oldGui:Destroy()
 	end
 
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = name
-	screenGui.ResetOnSpawn = false
-	screenGui.IgnoreGuiInset = true
-	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	screenGui.Parent = parent
+	local gui = Instance.new("ScreenGui")
+	gui.Name = name
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	gui.Parent = parent
 
 	local container = Instance.new("Frame")
 	container.Name = "Container"
 	container.AnchorPoint = Vector2.new(0.5, 0.5)
 	container.Position = options.Position or DEFAULTS.Position
-	container.Size = getSize(options.Size)
+	container.Size = makeSize(options.Size)
 	container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	container.BorderSizePixel = 0
 	container.ClipsDescendants = true
-	container.Parent = screenGui
+	container.Parent = gui
 
 	local rootCorner = Instance.new("UICorner")
 	rootCorner.Name = "RootCorner"
@@ -76,13 +78,18 @@ function Slate:CreateWindow(options)
 	rootCorner.Parent = container
 
 	return setmetatable({
-		Gui = screenGui,
+		Gui = gui,
 		Container = container,
+		Services = {
+			Players = Players,
+			TweenService = TweenService,
+			UserInputService = UserInputService,
+		},
 	}, Slate)
 end
 
 function Slate:SetSize(size)
-	self.Container.Size = getSize(size)
+	self.Container.Size = makeSize(size)
 end
 
 function Slate:SetVisible(visible)
