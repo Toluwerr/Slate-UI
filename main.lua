@@ -10,6 +10,9 @@ local ContextActionService = game:GetService("ContextActionService")
 local Slate = {}
 Slate.__index = Slate
 
+local Tab = {}
+Tab.__index = Tab
+
 Slate.Services = {
 	Players = Players,
 	TweenService = TweenService,
@@ -60,6 +63,18 @@ local function getWindowSize(size)
 	return UDim2.fromOffset(width, height), width, height
 end
 
+local function getTabName(tabOptions)
+	if type(tabOptions) == "string" then
+		return tabOptions
+	end
+
+	if type(tabOptions) == "table" then
+		return tabOptions.Name
+	end
+
+	error('CreateTab needs a name. Example: Window:CreateTab("Main")')
+end
+
 local function setButtonHover(button)
 	button.MouseEnter:Connect(function()
 		TweenService:Create(
@@ -76,6 +91,20 @@ local function setButtonHover(button)
 			{BackgroundTransparency = 1}
 		):Play()
 	end)
+end
+
+local function updateTabStyle(tab)
+	if not tab.Button or not tab.Button.Parent then
+		return
+	end
+
+	if tab.Selected then
+		tab.Button.BackgroundTransparency = 0
+		tab.Button.TextColor3 = Color3.fromRGB(42, 42, 45)
+	else
+		tab.Button.BackgroundTransparency = 1
+		tab.Button.TextColor3 = Color3.fromRGB(116, 116, 121)
+	end
 end
 
 function Slate:CreateWindow(options)
@@ -223,6 +252,7 @@ function Slate:CreateWindow(options)
 	sidebar.Size = UDim2.new(0, sidebarWidth, 1, -topBarHeight)
 	sidebar.BackgroundColor3 = Color3.fromRGB(247, 247, 248)
 	sidebar.BorderSizePixel = 0
+	sidebar.ClipsDescendants = true
 	sidebar.ZIndex = 1
 	sidebar.Parent = window
 
@@ -248,12 +278,39 @@ function Slate:CreateWindow(options)
 	sidebarTopFill.BorderSizePixel = 0
 	sidebarTopFill.Parent = sidebar
 
+	local tabList = Instance.new("ScrollingFrame")
+	tabList.Name = "Tabs"
+	tabList.Position = UDim2.fromOffset(0, 0)
+	tabList.Size = UDim2.fromScale(1, 1)
+	tabList.BackgroundTransparency = 1
+	tabList.BorderSizePixel = 0
+	tabList.CanvasSize = UDim2.fromOffset(0, 0)
+	tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	tabList.ScrollBarThickness = 0
+	tabList.ZIndex = 3
+	tabList.Parent = sidebar
+
+	local tabPadding = Instance.new("UIPadding")
+	tabPadding.PaddingTop = UDim.new(0, 10)
+	tabPadding.PaddingBottom = UDim.new(0, 10)
+	tabPadding.PaddingLeft = UDim.new(0, 8)
+	tabPadding.PaddingRight = UDim.new(0, 8)
+	tabPadding.Parent = tabList
+
+	local tabLayout = Instance.new("UIListLayout")
+	tabLayout.Padding = UDim.new(0, 4)
+	tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	tabLayout.Parent = tabList
+
 	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
 		TopBar = topBar,
 		Divider = divider,
 		Sidebar = sidebar,
+		TabList = tabList,
+		Tabs = {},
+		SelectedTab = nil,
 		MinimizeButton = minimizeButton,
 		CloseButton = closeButton,
 		ExpandedSize = windowSize,
@@ -275,6 +332,131 @@ function Slate:CreateWindow(options)
 	end)
 
 	return windowObject
+end
+
+function Slate:CreateTab(tabOptions)
+	local tabName = getTabName(tabOptions)
+
+	if type(tabName) ~= "string" or tabName == "" then
+		error("Tab names must be non-empty strings.")
+	end
+
+	local tabButton = Instance.new("TextButton")
+	tabButton.Name = tabName
+	tabButton.Size = UDim2.new(1, 0, 0, 36)
+	tabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	tabButton.BackgroundTransparency = 1
+	tabButton.BorderSizePixel = 0
+	tabButton.AutoButtonColor = false
+	tabButton.Text = tabName
+	tabButton.TextColor3 = Color3.fromRGB(116, 116, 121)
+	tabButton.Font = Enum.Font.GothamMedium
+	tabButton.TextSize = 13
+	tabButton.TextXAlignment = Enum.TextXAlignment.Left
+	tabButton.ZIndex = 4
+	tabButton.Parent = self.TabList
+
+	local tabTextPadding = Instance.new("UIPadding")
+	tabTextPadding.PaddingLeft = UDim.new(0, 12)
+	tabTextPadding.PaddingRight = UDim.new(0, 12)
+	tabTextPadding.Parent = tabButton
+
+	local tabCorner = Instance.new("UICorner")
+	tabCorner.CornerRadius = UDim.new(0, 8)
+	tabCorner.Parent = tabButton
+
+	local tabObject = setmetatable({
+		Name = tabName,
+		Button = tabButton,
+		Window = self,
+		Selected = false,
+	}, Tab)
+
+	tabButton.MouseEnter:Connect(function()
+		if not tabObject.Selected then
+			TweenService:Create(
+				tabButton,
+				TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundTransparency = 0.94}
+			):Play()
+		end
+	end)
+
+	tabButton.MouseLeave:Connect(function()
+		if not tabObject.Selected then
+			TweenService:Create(
+				tabButton,
+				TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundTransparency = 1}
+			):Play()
+		end
+	end)
+
+	tabButton.Activated:Connect(function()
+		self:SelectTab(tabObject)
+	end)
+
+	table.insert(self.Tabs, tabObject)
+
+	if #self.Tabs == 1 then
+		self:SelectTab(tabObject)
+	end
+
+	return tabObject
+end
+
+function Slate:SelectTab(tab)
+	if not tab or tab.Window ~= self then
+		error("SelectTab expects a tab created by this window.")
+	end
+
+	if self.SelectedTab == tab then
+		return
+	end
+
+	for _, currentTab in ipairs(self.Tabs) do
+		currentTab.Selected = currentTab == tab
+		updateTabStyle(currentTab)
+	end
+
+	self.SelectedTab = tab
+end
+
+function Tab:Select()
+	self.Window:SelectTab(self)
+end
+
+function Tab:SetName(name)
+	if type(name) ~= "string" or name == "" then
+		error("Tab names must be non-empty strings.")
+	end
+
+	self.Name = name
+	self.Button.Name = name
+	self.Button.Text = name
+end
+
+function Tab:Destroy()
+	local window = self.Window
+
+	for index, currentTab in ipairs(window.Tabs) do
+		if currentTab == self then
+			table.remove(window.Tabs, index)
+			break
+		end
+	end
+
+	if self.Button then
+		self.Button:Destroy()
+	end
+
+	if window.SelectedTab == self then
+		window.SelectedTab = nil
+
+		if window.Tabs[1] then
+			window:SelectTab(window.Tabs[1])
+		end
+	end
 end
 
 function Slate:SetMinimized(isMinimized)
@@ -357,6 +539,10 @@ end
 
 function Slate:GetSidebar()
 	return self.Sidebar
+end
+
+function Slate:GetTabs()
+	return self.Tabs
 end
 
 function Slate:SetVisible(isVisible)
