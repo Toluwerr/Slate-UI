@@ -177,14 +177,14 @@ local function updateTabStyle(tab)
 
 	if tab.Selected then
 		tab.Button.BackgroundTransparency = 0
-		tab.Button.TextColor3 = Color3.fromRGB(42, 42, 45)
+		tab.Label.TextColor3 = Color3.fromRGB(42, 42, 45)
 
 		if tab.IconFrame then
 			tab.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
 		end
 	else
 		tab.Button.BackgroundTransparency = 1
-		tab.Button.TextColor3 = Color3.fromRGB(116, 116, 121)
+		tab.Label.TextColor3 = Color3.fromRGB(116, 116, 121)
 
 		if tab.IconFrame then
 			tab.IconFrame.ImageColor3 = Color3.fromRGB(116, 116, 121)
@@ -444,26 +444,33 @@ function Slate:CreateTab(tabOptions)
 	tabButton.BackgroundTransparency = 1
 	tabButton.BorderSizePixel = 0
 	tabButton.AutoButtonColor = false
-	tabButton.Text = tabName
-	tabButton.TextColor3 = Color3.fromRGB(116, 116, 121)
-	tabButton.Font = Enum.Font.GothamMedium
-	tabButton.TextSize = 13
-	tabButton.TextXAlignment = Enum.TextXAlignment.Left
+	tabButton.Text = ""
 	tabButton.ZIndex = 4
 	tabButton.Parent = self.TabList
 
-	local tabTextPadding = Instance.new("UIPadding")
-	tabTextPadding.PaddingLeft = UDim.new(0, 12)
-	tabTextPadding.PaddingRight = UDim.new(0, 12)
-	tabTextPadding.Parent = tabButton
-
 	local iconFrame
 	local iconName
+	local textLeft = 12
 
 	if tabIcon ~= nil then
 		iconFrame, iconName = createLucideIcon(tabButton, tabIcon)
-		tabTextPadding.PaddingLeft = UDim.new(0, 40)
+		textLeft = 40
 	end
+
+	local tabLabel = Instance.new("TextLabel")
+	tabLabel.Name = "Label"
+	tabLabel.Position = UDim2.fromOffset(textLeft, 0)
+	tabLabel.Size = UDim2.new(1, -textLeft - 12, 1, 0)
+	tabLabel.BackgroundTransparency = 1
+	tabLabel.BorderSizePixel = 0
+	tabLabel.Text = tabName
+	tabLabel.TextColor3 = Color3.fromRGB(116, 116, 121)
+	tabLabel.Font = Enum.Font.GothamMedium
+	tabLabel.TextSize = 13
+	tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+	tabLabel.TextYAlignment = Enum.TextYAlignment.Center
+	tabLabel.ZIndex = 5
+	tabLabel.Parent = tabButton
 
 	local tabCorner = Instance.new("UICorner")
 	tabCorner.CornerRadius = UDim.new(0, 8)
@@ -483,7 +490,7 @@ function Slate:CreateTab(tabOptions)
 		Icon = iconName,
 		IconFrame = iconFrame,
 		Button = tabButton,
-		TextPadding = tabTextPadding,
+		Label = tabLabel,
 		Page = page,
 		Window = self,
 		Selected = false,
@@ -555,7 +562,7 @@ function Tab:SetName(name)
 
 	self.Name = name
 	self.Button.Name = name
-	self.Button.Text = name
+	self.Label.Text = name
 	self.Page.Name = name .. "Page"
 end
 
@@ -570,15 +577,19 @@ function Tab:SetIcon(iconName)
 	end
 
 	self.Icon = nil
-	self.TextPadding.PaddingLeft = UDim.new(0, 12)
 
-	if iconName ~= nil then
-		self.IconFrame, self.Icon = createLucideIcon(self.Button, iconName)
-		self.TextPadding.PaddingLeft = UDim.new(0, 40)
+	if iconName == nil then
+		self.Label.Position = UDim2.fromOffset(12, 0)
+		self.Label.Size = UDim2.new(1, -24, 1, 0)
+		return
+	end
 
-		if self.Selected then
-			self.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
-		end
+	self.IconFrame, self.Icon = createLucideIcon(self.Button, iconName)
+	self.Label.Position = UDim2.fromOffset(40, 0)
+	self.Label.Size = UDim2.new(1, -52, 1, 0)
+
+	if self.Selected then
+		self.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
 	end
 end
 
