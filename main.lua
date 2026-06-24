@@ -1,8 +1,25 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+local HttpService = game:GetService("HttpService")
+local GuiService = game:GetService("GuiService")
+local ContextActionService = game:GetService("ContextActionService")
 
 local Slate = {}
 Slate.__index = Slate
+
+Slate.Services = {
+	Players = Players,
+	TweenService = TweenService,
+	UserInputService = UserInputService,
+	RunService = RunService,
+	TextService = TextService,
+	HttpService = HttpService,
+	GuiService = GuiService,
+	ContextActionService = ContextActionService,
+}
 
 local DefaultSettings = {
 	Name = "Slate",
@@ -43,7 +60,7 @@ local function getWindowSize(size)
 	return UDim2.fromOffset(width, height), width, height
 end
 
-local function setHover(button)
+local function setButtonHover(button)
 	button.MouseEnter:Connect(function()
 		TweenService:Create(
 			button,
@@ -115,6 +132,7 @@ function Slate:CreateWindow(options)
 	topBar.Size = UDim2.new(1, 0, 0, topBarHeight)
 	topBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	topBar.BorderSizePixel = 0
+	topBar.ZIndex = 2
 	topBar.Parent = window
 
 	local topBarCorner = Instance.new("UICorner")
@@ -128,6 +146,7 @@ function Slate:CreateWindow(options)
 	topBarFill.Size = UDim2.new(1, 0, 1, -cornerRadius)
 	topBarFill.BackgroundColor3 = topBar.BackgroundColor3
 	topBarFill.BorderSizePixel = 0
+	topBarFill.ZIndex = 2
 	topBarFill.Parent = topBar
 
 	local divider = Instance.new("Frame")
@@ -137,27 +156,31 @@ function Slate:CreateWindow(options)
 	divider.Size = UDim2.new(1, 0, 0, 1)
 	divider.BackgroundColor3 = Color3.fromRGB(232, 232, 234)
 	divider.BorderSizePixel = 0
+	divider.ZIndex = 3
 	divider.Parent = topBar
 
 	local minimizeButton = Instance.new("TextButton")
 	minimizeButton.Name = "Minimize"
 	minimizeButton.AnchorPoint = Vector2.new(1, 0.5)
-	minimizeButton.Position = UDim2.new(1, -48, 0.5, 0)
-	minimizeButton.Size = UDim2.fromOffset(28, 28)
-	minimizeButton.BackgroundColor3 = Color3.fromRGB(220, 220, 223)
+	minimizeButton.Position = UDim2.new(1, -46, 0.5, 0)
+	minimizeButton.Size = UDim2.fromOffset(30, 30)
+	minimizeButton.BackgroundColor3 = Color3.fromRGB(221, 221, 224)
 	minimizeButton.BackgroundTransparency = 1
 	minimizeButton.BorderSizePixel = 0
 	minimizeButton.AutoButtonColor = false
+	minimizeButton.Active = true
 	minimizeButton.Text = ""
+	minimizeButton.ZIndex = 5
 	minimizeButton.Parent = topBar
 
 	local minimizeIcon = Instance.new("Frame")
 	minimizeIcon.Name = "Icon"
 	minimizeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
 	minimizeIcon.Position = UDim2.fromScale(0.5, 0.5)
-	minimizeIcon.Size = UDim2.fromOffset(12, 2)
-	minimizeIcon.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
+	minimizeIcon.Size = UDim2.fromOffset(13, 2)
+	minimizeIcon.BackgroundColor3 = Color3.fromRGB(64, 64, 68)
 	minimizeIcon.BorderSizePixel = 0
+	minimizeIcon.ZIndex = 6
 	minimizeIcon.Parent = minimizeButton
 
 	local minimizeCorner = Instance.new("UICorner")
@@ -167,13 +190,15 @@ function Slate:CreateWindow(options)
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "Close"
 	closeButton.AnchorPoint = Vector2.new(1, 0.5)
-	closeButton.Position = UDim2.new(1, -12, 0.5, 0)
-	closeButton.Size = UDim2.fromOffset(28, 28)
-	closeButton.BackgroundColor3 = Color3.fromRGB(220, 220, 223)
+	closeButton.Position = UDim2.new(1, -8, 0.5, 0)
+	closeButton.Size = UDim2.fromOffset(30, 30)
+	closeButton.BackgroundColor3 = Color3.fromRGB(221, 221, 224)
 	closeButton.BackgroundTransparency = 1
 	closeButton.BorderSizePixel = 0
 	closeButton.AutoButtonColor = false
+	closeButton.Active = true
 	closeButton.Text = ""
+	closeButton.ZIndex = 5
 	closeButton.Parent = topBar
 
 	local closeLineOne = Instance.new("Frame")
@@ -182,8 +207,9 @@ function Slate:CreateWindow(options)
 	closeLineOne.Position = UDim2.fromScale(0.5, 0.5)
 	closeLineOne.Size = UDim2.fromOffset(14, 2)
 	closeLineOne.Rotation = 45
-	closeLineOne.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
+	closeLineOne.BackgroundColor3 = Color3.fromRGB(64, 64, 68)
 	closeLineOne.BorderSizePixel = 0
+	closeLineOne.ZIndex = 6
 	closeLineOne.Parent = closeButton
 
 	local closeLineOneCorner = Instance.new("UICorner")
@@ -196,8 +222,9 @@ function Slate:CreateWindow(options)
 	closeLineTwo.Position = UDim2.fromScale(0.5, 0.5)
 	closeLineTwo.Size = UDim2.fromOffset(14, 2)
 	closeLineTwo.Rotation = -45
-	closeLineTwo.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
+	closeLineTwo.BackgroundColor3 = Color3.fromRGB(64, 64, 68)
 	closeLineTwo.BorderSizePixel = 0
+	closeLineTwo.ZIndex = 6
 	closeLineTwo.Parent = closeButton
 
 	local closeLineTwoCorner = Instance.new("UICorner")
@@ -210,6 +237,7 @@ function Slate:CreateWindow(options)
 	sidebar.Size = UDim2.new(0, sidebarWidth, 1, -topBarHeight)
 	sidebar.BackgroundColor3 = Color3.fromRGB(247, 247, 248)
 	sidebar.BorderSizePixel = 0
+	sidebar.ZIndex = 1
 	sidebar.Parent = window
 
 	local sidebarCorner = Instance.new("UICorner")
@@ -243,11 +271,11 @@ function Slate:CreateWindow(options)
 		CloseButton = closeButton,
 		ExpandedSize = windowSize,
 		TopBarHeight = topBarHeight,
-		Minimized = false,
+		IsMinimized = false,
 	}, Slate)
 
-	setHover(minimizeButton)
-	setHover(closeButton)
+	setButtonHover(minimizeButton)
+	setButtonHover(closeButton)
 
 	minimizeButton.Activated:Connect(function()
 		windowObject:ToggleMinimize()
@@ -260,16 +288,18 @@ function Slate:CreateWindow(options)
 	return windowObject
 end
 
-function Slate:ToggleMinimize()
-	self.Minimized = not self.Minimized
-	self.Sidebar.Visible = not self.Minimized
+function Slate:SetMinimized(isMinimized)
+	if self.IsMinimized == isMinimized then
+		return
+	end
 
-	local targetSize
+	self.IsMinimized = isMinimized
+	self.Sidebar.Visible = not isMinimized
 
-	if self.Minimized then
+	local targetSize = self.ExpandedSize
+
+	if isMinimized then
 		targetSize = UDim2.fromOffset(self.ExpandedSize.X.Offset, self.TopBarHeight)
-	else
-		targetSize = self.ExpandedSize
 	end
 
 	TweenService:Create(
@@ -279,11 +309,15 @@ function Slate:ToggleMinimize()
 	):Play()
 end
 
+function Slate:ToggleMinimize()
+	self:SetMinimized(not self.IsMinimized)
+end
+
 function Slate:SetSize(size)
 	local windowSize = getWindowSize(size)
 	self.ExpandedSize = windowSize
 
-	if not self.Minimized then
+	if not self.IsMinimized then
 		self.Container.Size = windowSize
 	end
 end
