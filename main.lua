@@ -280,7 +280,6 @@ function Slate:CreateWindow(options)
 
 	local tabList = Instance.new("ScrollingFrame")
 	tabList.Name = "Tabs"
-	tabList.Position = UDim2.fromOffset(0, 0)
 	tabList.Size = UDim2.fromScale(1, 1)
 	tabList.BackgroundTransparency = 1
 	tabList.BorderSizePixel = 0
@@ -302,6 +301,16 @@ function Slate:CreateWindow(options)
 	tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	tabLayout.Parent = tabList
 
+	local mainArea = Instance.new("Frame")
+	mainArea.Name = "MainArea"
+	mainArea.Position = UDim2.fromOffset(sidebarWidth, topBarHeight)
+	mainArea.Size = UDim2.new(1, -sidebarWidth, 1, -topBarHeight)
+	mainArea.BackgroundTransparency = 1
+	mainArea.BorderSizePixel = 0
+	mainArea.ClipsDescendants = true
+	mainArea.ZIndex = 1
+	mainArea.Parent = window
+
 	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
@@ -309,6 +318,7 @@ function Slate:CreateWindow(options)
 		Divider = divider,
 		Sidebar = sidebar,
 		TabList = tabList,
+		MainArea = mainArea,
 		Tabs = {},
 		SelectedTab = nil,
 		MinimizeButton = minimizeButton,
@@ -365,9 +375,19 @@ function Slate:CreateTab(tabOptions)
 	tabCorner.CornerRadius = UDim.new(0, 8)
 	tabCorner.Parent = tabButton
 
+	local page = Instance.new("Frame")
+	page.Name = tabName .. "Page"
+	page.Size = UDim2.fromScale(1, 1)
+	page.BackgroundTransparency = 1
+	page.BorderSizePixel = 0
+	page.Visible = false
+	page.ZIndex = 2
+	page.Parent = self.MainArea
+
 	local tabObject = setmetatable({
 		Name = tabName,
 		Button = tabButton,
+		Page = page,
 		Window = self,
 		Selected = false,
 	}, Tab)
@@ -416,6 +436,7 @@ function Slate:SelectTab(tab)
 
 	for _, currentTab in ipairs(self.Tabs) do
 		currentTab.Selected = currentTab == tab
+		currentTab.Page.Visible = currentTab == tab
 		updateTabStyle(currentTab)
 	end
 
@@ -426,6 +447,10 @@ function Tab:Select()
 	self.Window:SelectTab(self)
 end
 
+function Tab:GetPage()
+	return self.Page
+end
+
 function Tab:SetName(name)
 	if type(name) ~= "string" or name == "" then
 		error("Tab names must be non-empty strings.")
@@ -434,6 +459,7 @@ function Tab:SetName(name)
 	self.Name = name
 	self.Button.Name = name
 	self.Button.Text = name
+	self.Page.Name = name .. "Page"
 end
 
 function Tab:Destroy()
@@ -448,6 +474,10 @@ function Tab:Destroy()
 
 	if self.Button then
 		self.Button:Destroy()
+	end
+
+	if self.Page then
+		self.Page:Destroy()
 	end
 
 	if window.SelectedTab == self then
@@ -473,6 +503,7 @@ function Slate:SetMinimized(isMinimized)
 
 	if not isMinimized then
 		self.Sidebar.Visible = true
+		self.MainArea.Visible = true
 		self.Divider.Visible = true
 	end
 
@@ -509,6 +540,7 @@ function Slate:SetMinimized(isMinimized)
 
 		if isMinimized then
 			self.Sidebar.Visible = false
+			self.MainArea.Visible = false
 			self.Divider.Visible = false
 		end
 
@@ -539,6 +571,10 @@ end
 
 function Slate:GetSidebar()
 	return self.Sidebar
+end
+
+function Slate:GetMainArea()
+	return self.MainArea
 end
 
 function Slate:GetTabs()
