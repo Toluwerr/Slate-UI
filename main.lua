@@ -92,8 +92,8 @@ function Slate:CreateWindow(options)
 		error("SidebarWidth must be smaller than the window width.")
 	end
 
-	if type(topBarHeight) ~= "number" or topBarHeight <= cornerRadius or topBarHeight >= windowHeight then
-		error("TopBarHeight must be larger than CornerRadius and smaller than the window height.")
+	if type(topBarHeight) ~= "number" or topBarHeight <= 0 or topBarHeight >= windowHeight then
+		error("TopBarHeight must be a positive number smaller than the window height.")
 	end
 
 	if type(cornerRadius) ~= "number" or cornerRadius < 0 then
@@ -112,14 +112,14 @@ function Slate:CreateWindow(options)
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screenGui.Parent = playerGui
 
-	local window = Instance.new("Frame")
+	local window = Instance.new("CanvasGroup")
 	window.Name = "Container"
 	window.AnchorPoint = Vector2.new(0.5, 0.5)
 	window.Position = options.Position or DefaultSettings.Position
 	window.Size = windowSize
 	window.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	window.BorderSizePixel = 0
-	window.ClipsDescendants = true
+	window.GroupTransparency = 0
 	window.Parent = screenGui
 
 	local windowCorner = Instance.new("UICorner")
@@ -134,20 +134,6 @@ function Slate:CreateWindow(options)
 	topBar.BorderSizePixel = 0
 	topBar.ZIndex = 2
 	topBar.Parent = window
-
-	local topBarCorner = Instance.new("UICorner")
-	topBarCorner.Name = "Corner"
-	topBarCorner.CornerRadius = UDim.new(0, cornerRadius)
-	topBarCorner.Parent = topBar
-
-	local topBarFill = Instance.new("Frame")
-	topBarFill.Name = "Fill"
-	topBarFill.Position = UDim2.fromOffset(0, cornerRadius)
-	topBarFill.Size = UDim2.new(1, 0, 1, -cornerRadius)
-	topBarFill.BackgroundColor3 = topBar.BackgroundColor3
-	topBarFill.BorderSizePixel = 0
-	topBarFill.ZIndex = 2
-	topBarFill.Parent = topBar
 
 	local divider = Instance.new("Frame")
 	divider.Name = "Divider"
@@ -183,9 +169,9 @@ function Slate:CreateWindow(options)
 	minimizeIcon.ZIndex = 6
 	minimizeIcon.Parent = minimizeButton
 
-	local minimizeCorner = Instance.new("UICorner")
-	minimizeCorner.CornerRadius = UDim.new(1, 0)
-	minimizeCorner.Parent = minimizeIcon
+	local minimizeIconCorner = Instance.new("UICorner")
+	minimizeIconCorner.CornerRadius = UDim.new(1, 0)
+	minimizeIconCorner.Parent = minimizeIcon
 
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "Close"
@@ -240,34 +226,10 @@ function Slate:CreateWindow(options)
 	sidebar.ZIndex = 1
 	sidebar.Parent = window
 
-	local sidebarCorner = Instance.new("UICorner")
-	sidebarCorner.Name = "Corner"
-	sidebarCorner.CornerRadius = UDim.new(0, cornerRadius)
-	sidebarCorner.Parent = sidebar
-
-	local sidebarFillWidth = math.min(cornerRadius, sidebarWidth)
-
-	local sidebarFill = Instance.new("Frame")
-	sidebarFill.Name = "Fill"
-	sidebarFill.Position = UDim2.fromOffset(sidebarWidth - sidebarFillWidth, 0)
-	sidebarFill.Size = UDim2.new(0, sidebarFillWidth, 1, 0)
-	sidebarFill.BackgroundColor3 = sidebar.BackgroundColor3
-	sidebarFill.BorderSizePixel = 0
-	sidebarFill.Parent = sidebar
-
-	local sidebarTopFill = Instance.new("Frame")
-	sidebarTopFill.Name = "TopFill"
-	sidebarTopFill.Size = UDim2.fromOffset(math.min(cornerRadius, sidebarWidth), cornerRadius)
-	sidebarTopFill.BackgroundColor3 = sidebar.BackgroundColor3
-	sidebarTopFill.BorderSizePixel = 0
-	sidebarTopFill.Parent = sidebar
-
 	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
 		TopBar = topBar,
-		TopBarFill = topBarFill,
-		Divider = divider,
 		Sidebar = sidebar,
 		MinimizeButton = minimizeButton,
 		CloseButton = closeButton,
@@ -297,8 +259,6 @@ function Slate:SetMinimized(isMinimized)
 
 	self.IsMinimized = isMinimized
 	self.Sidebar.Visible = not isMinimized
-	self.TopBarFill.Visible = not isMinimized
-	self.Divider.Visible = not isMinimized
 
 	local targetSize = self.ExpandedSize
 
