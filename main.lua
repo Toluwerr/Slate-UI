@@ -8,6 +8,7 @@ Slate.__index = Slate
 local DEFAULTS = {
 	Name = "Slate",
 	Size = {620, 420},
+	SidebarWidth = 160,
 	CornerRadius = 16,
 	Position = UDim2.fromScale(0.5, 0.5),
 }
@@ -26,9 +27,7 @@ local function getPlayerGui(customParent)
 end
 
 local function makeSize(size)
-	if size == nil then
-		size = DEFAULTS.Size
-	end
+	size = size or DEFAULTS.Size
 
 	if type(size) ~= "table" then
 		error("Slate Size must use {width, height}. Example: {700, 480}")
@@ -37,8 +36,8 @@ local function makeSize(size)
 	local width = size[1]
 	local height = size[2]
 
-	if type(width) ~= "number" or type(height) ~= "number" then
-		error("Slate Size values must be numbers. Example: {700, 480}")
+	if type(width) ~= "number" or type(height) ~= "number" or width <= 0 or height <= 0 then
+		error("Slate Size values must be positive numbers. Example: {700, 480}")
 	end
 
 	return UDim2.fromOffset(width, height)
@@ -49,6 +48,11 @@ function Slate:CreateWindow(options)
 
 	local parent = getPlayerGui(options.Parent)
 	local name = options.Name or DEFAULTS.Name
+	local sidebarWidth = options.SidebarWidth or DEFAULTS.SidebarWidth
+
+	if type(sidebarWidth) ~= "number" or sidebarWidth <= 0 then
+		error("Slate SidebarWidth must be a positive number.")
+	end
 
 	local oldGui = parent:FindFirstChild(name)
 	if oldGui then
@@ -77,9 +81,18 @@ function Slate:CreateWindow(options)
 	rootCorner.CornerRadius = UDim.new(0, options.CornerRadius or DEFAULTS.CornerRadius)
 	rootCorner.Parent = container
 
+	local sidebar = Instance.new("Frame")
+	sidebar.Name = "Sidebar"
+	sidebar.Position = UDim2.fromOffset(0, 0)
+	sidebar.Size = UDim2.new(0, sidebarWidth, 1, 0)
+	sidebar.BackgroundColor3 = Color3.fromRGB(247, 247, 248)
+	sidebar.BorderSizePixel = 0
+	sidebar.Parent = container
+
 	return setmetatable({
 		Gui = gui,
 		Container = container,
+		Sidebar = sidebar,
 		Services = {
 			Players = Players,
 			TweenService = TweenService,
@@ -90,6 +103,10 @@ end
 
 function Slate:SetSize(size)
 	self.Container.Size = makeSize(size)
+end
+
+function Slate:GetSidebar()
+	return self.Sidebar
 end
 
 function Slate:SetVisible(visible)
