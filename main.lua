@@ -76,6 +76,39 @@ local function getTabName(tabOptions)
 end
 
 
+local LucideAssets = {
+	["home"] = "rbxassetid://7733960981",
+	["search"] = "rbxassetid://7734052925",
+	["folder"] = "rbxassetid://7733799185",
+	["files"] = "rbxassetid://7743867811",
+	["code"] = "rbxassetid://7733749837",
+	["terminal"] = "rbxassetid://7743872929",
+	["shield"] = "rbxassetid://7734056608",
+	["file"] = "rbxassetid://7733793319",
+	["bell"] = "rbxassetid://7733911828",
+	["bookmark"] = "rbxassetid://7733692043",
+	["user"] = "rbxassetid://7743875962",
+	["settings"] = "rbxassetid://7734053495",
+	["layout-dashboard"] = "rbxassetid://7733970318",
+	["sliders"] = "rbxassetid://7734058803",
+	["info"] = "rbxassetid://7733964719",
+	["menu"] = "rbxassetid://7733993211",
+}
+
+local IconAliases = {
+	["house"] = "home",
+	["dashboard"] = "layout-dashboard",
+	["sliders-horizontal"] = "sliders",
+	["slider"] = "sliders",
+	["security"] = "shield",
+	["documents"] = "file",
+	["alerts"] = "bell",
+	["saved"] = "bookmark",
+	["profile"] = "user",
+}
+
+Slate.Icons = LucideAssets
+
 local function getTabIcon(tabOptions)
 	if type(tabOptions) == "table" then
 		return tabOptions.Icon
@@ -84,238 +117,37 @@ local function getTabIcon(tabOptions)
 	return nil
 end
 
-local IconAliases = {
-	home = "house",
-	dashboard = "layoutdashboard",
-	sliders = "slidershorizontal",
-	slider = "slidershorizontal",
-}
-
-local LucideIcons = {}
-
-local function addLine(parent, x1, y1, x2, y2, color, zIndex)
-	local scale = 0.75
-	local x = (x1 + x2) * scale * 0.5
-	local y = (y1 + y2) * scale * 0.5
-	local width = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2) * scale
-
-	local line = Instance.new("Frame")
-	line.Name = "Stroke"
-	line.AnchorPoint = Vector2.new(0.5, 0.5)
-	line.Position = UDim2.fromOffset(x, y)
-	line.Size = UDim2.fromOffset(width, 1.6)
-	line.Rotation = math.deg(math.atan2(y2 - y1, x2 - x1))
-	line.BackgroundColor3 = color
-	line.BorderSizePixel = 0
-	line.ZIndex = zIndex
-	line.Parent = parent
-
-	local lineCorner = Instance.new("UICorner")
-	lineCorner.CornerRadius = UDim.new(1, 0)
-	lineCorner.Parent = line
-end
-
-local function addCircle(parent, centerX, centerY, radius, color, zIndex)
-	local scale = 0.75
-
-	local circle = Instance.new("Frame")
-	circle.Name = "Stroke"
-	circle.AnchorPoint = Vector2.new(0.5, 0.5)
-	circle.Position = UDim2.fromOffset(centerX * scale, centerY * scale)
-	circle.Size = UDim2.fromOffset(radius * 2 * scale, radius * 2 * scale)
-	circle.BackgroundTransparency = 1
-	circle.BorderSizePixel = 0
-	circle.ZIndex = zIndex
-	circle.Parent = parent
-
-	local circleCorner = Instance.new("UICorner")
-	circleCorner.CornerRadius = UDim.new(1, 0)
-	circleCorner.Parent = circle
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 1.5
-	stroke.Color = color
-	stroke.Parent = circle
-end
-
-local function addOutline(parent, x, y, width, height, radius, color, zIndex)
-	local scale = 0.75
-
-	local outline = Instance.new("Frame")
-	outline.Name = "Stroke"
-	outline.Position = UDim2.fromOffset(x * scale, y * scale)
-	outline.Size = UDim2.fromOffset(width * scale, height * scale)
-	outline.BackgroundTransparency = 1
-	outline.BorderSizePixel = 0
-	outline.ZIndex = zIndex
-	outline.Parent = parent
-
-	local outlineCorner = Instance.new("UICorner")
-	outlineCorner.CornerRadius = UDim.new(0, radius * scale)
-	outlineCorner.Parent = outline
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 1.5
-	stroke.Color = color
-	stroke.Parent = outline
-end
-
-LucideIcons.house = function(parent, color, zIndex)
-	addLine(parent, 3, 11, 12, 3, color, zIndex)
-	addLine(parent, 12, 3, 21, 11, color, zIndex)
-	addLine(parent, 5, 10, 5, 21, color, zIndex)
-	addLine(parent, 5, 21, 19, 21, color, zIndex)
-	addLine(parent, 19, 21, 19, 10, color, zIndex)
-	addLine(parent, 9, 21, 9, 15, color, zIndex)
-	addLine(parent, 9, 15, 15, 15, color, zIndex)
-	addLine(parent, 15, 15, 15, 21, color, zIndex)
-end
-
-LucideIcons.search = function(parent, color, zIndex)
-	addCircle(parent, 10.5, 10.5, 6.5, color, zIndex)
-	addLine(parent, 15.5, 15.5, 21, 21, color, zIndex)
-end
-
-LucideIcons.settings = function(parent, color, zIndex)
-	addCircle(parent, 12, 12, 3.5, color, zIndex)
-	addLine(parent, 12, 2, 12, 5.5, color, zIndex)
-	addLine(parent, 12, 18.5, 12, 22, color, zIndex)
-	addLine(parent, 2, 12, 5.5, 12, color, zIndex)
-	addLine(parent, 18.5, 12, 22, 12, color, zIndex)
-	addLine(parent, 4.9, 4.9, 7.4, 7.4, color, zIndex)
-	addLine(parent, 16.6, 16.6, 19.1, 19.1, color, zIndex)
-	addLine(parent, 19.1, 4.9, 16.6, 7.4, color, zIndex)
-	addLine(parent, 7.4, 16.6, 4.9, 19.1, color, zIndex)
-end
-
-LucideIcons.user = function(parent, color, zIndex)
-	addCircle(parent, 12, 8, 4, color, zIndex)
-	addLine(parent, 4, 22, 4, 20, color, zIndex)
-	addLine(parent, 4, 20, 7, 16, color, zIndex)
-	addLine(parent, 7, 16, 17, 16, color, zIndex)
-	addLine(parent, 17, 16, 20, 20, color, zIndex)
-	addLine(parent, 20, 20, 20, 22, color, zIndex)
-end
-
-LucideIcons.folder = function(parent, color, zIndex)
-	addLine(parent, 2, 7, 9, 7, color, zIndex)
-	addLine(parent, 9, 7, 11, 9, color, zIndex)
-	addLine(parent, 11, 9, 22, 9, color, zIndex)
-	addLine(parent, 22, 9, 22, 21, color, zIndex)
-	addLine(parent, 22, 21, 2, 21, color, zIndex)
-	addLine(parent, 2, 21, 2, 7, color, zIndex)
-end
-
-LucideIcons.code = function(parent, color, zIndex)
-	addLine(parent, 8, 6, 3, 12, color, zIndex)
-	addLine(parent, 3, 12, 8, 18, color, zIndex)
-	addLine(parent, 16, 6, 21, 12, color, zIndex)
-	addLine(parent, 21, 12, 16, 18, color, zIndex)
-	addLine(parent, 14, 3, 10, 21, color, zIndex)
-end
-
-LucideIcons.info = function(parent, color, zIndex)
-	addCircle(parent, 12, 12, 9, color, zIndex)
-	addLine(parent, 12, 11, 12, 17, color, zIndex)
-	addCircle(parent, 12, 7, 0.9, color, zIndex)
-end
-
-LucideIcons.layoutdashboard = function(parent, color, zIndex)
-	addOutline(parent, 3, 3, 8, 8, 1.5, color, zIndex)
-	addOutline(parent, 13, 3, 8, 5, 1.5, color, zIndex)
-	addOutline(parent, 13, 10, 8, 11, 1.5, color, zIndex)
-	addOutline(parent, 3, 13, 8, 8, 1.5, color, zIndex)
-end
-
-LucideIcons.slidershorizontal = function(parent, color, zIndex)
-	addLine(parent, 3, 6, 21, 6, color, zIndex)
-	addLine(parent, 3, 12, 21, 12, color, zIndex)
-	addLine(parent, 3, 18, 21, 18, color, zIndex)
-	addCircle(parent, 9, 6, 2, color, zIndex)
-	addCircle(parent, 16, 12, 2, color, zIndex)
-	addCircle(parent, 7, 18, 2, color, zIndex)
-end
-
-LucideIcons.terminal = function(parent, color, zIndex)
-	addLine(parent, 5, 6, 10, 12, color, zIndex)
-	addLine(parent, 10, 12, 5, 18, color, zIndex)
-	addLine(parent, 13, 18, 20, 18, color, zIndex)
-end
-
-LucideIcons.shield = function(parent, color, zIndex)
-	addLine(parent, 12, 2, 20, 6, color, zIndex)
-	addLine(parent, 20, 6, 20, 12, color, zIndex)
-	addLine(parent, 20, 12, 12, 22, color, zIndex)
-	addLine(parent, 12, 22, 4, 12, color, zIndex)
-	addLine(parent, 4, 12, 4, 6, color, zIndex)
-	addLine(parent, 4, 6, 12, 2, color, zIndex)
-end
-
-LucideIcons.file = function(parent, color, zIndex)
-	addLine(parent, 6, 2, 14, 2, color, zIndex)
-	addLine(parent, 14, 2, 20, 8, color, zIndex)
-	addLine(parent, 20, 8, 20, 22, color, zIndex)
-	addLine(parent, 20, 22, 6, 22, color, zIndex)
-	addLine(parent, 6, 22, 6, 2, color, zIndex)
-	addLine(parent, 14, 2, 14, 8, color, zIndex)
-	addLine(parent, 14, 8, 20, 8, color, zIndex)
-end
-
-LucideIcons.bell = function(parent, color, zIndex)
-	addLine(parent, 6, 17, 18, 17, color, zIndex)
-	addLine(parent, 6, 17, 8, 14, color, zIndex)
-	addLine(parent, 8, 14, 8, 10, color, zIndex)
-	addLine(parent, 8, 10, 12, 5, color, zIndex)
-	addLine(parent, 12, 5, 16, 10, color, zIndex)
-	addLine(parent, 16, 10, 16, 14, color, zIndex)
-	addLine(parent, 16, 14, 18, 17, color, zIndex)
-	addLine(parent, 10, 20, 14, 20, color, zIndex)
-end
-
-LucideIcons.bookmark = function(parent, color, zIndex)
-	addLine(parent, 6, 3, 18, 3, color, zIndex)
-	addLine(parent, 18, 3, 18, 21, color, zIndex)
-	addLine(parent, 18, 21, 12, 17, color, zIndex)
-	addLine(parent, 12, 17, 6, 21, color, zIndex)
-	addLine(parent, 6, 21, 6, 3, color, zIndex)
-end
-
-LucideIcons.menu = function(parent, color, zIndex)
-	addLine(parent, 4, 6, 20, 6, color, zIndex)
-	addLine(parent, 4, 12, 20, 12, color, zIndex)
-	addLine(parent, 4, 18, 20, 18, color, zIndex)
-end
-
-local function getIconRenderer(iconName)
+local function getIconAsset(iconName)
 	if type(iconName) ~= "string" then
 		error("Icon must be a Lucide icon name.")
 	end
 
-	local normalizedName = string.lower(iconName):gsub("[%s_%-]", "")
+	local normalizedName = string.lower(iconName):gsub("[%s_]+", "-")
 	normalizedName = IconAliases[normalizedName] or normalizedName
 
-	local renderer = LucideIcons[normalizedName]
-	if not renderer then
+	local asset = LucideAssets[normalizedName]
+	if not asset then
 		error('Unsupported Lucide icon "' .. iconName .. '".')
 	end
 
-	return renderer, normalizedName
+	return asset, normalizedName
 end
 
 local function createLucideIcon(parent, iconName)
-	local renderer, normalizedName = getIconRenderer(iconName)
+	local asset, normalizedName = getIconAsset(iconName)
 
-	local icon = Instance.new("Frame")
+	local icon = Instance.new("ImageLabel")
 	icon.Name = normalizedName
 	icon.AnchorPoint = Vector2.new(0, 0.5)
-	icon.Position = UDim2.new(0, 11, 0.5, 0)
-	icon.Size = UDim2.fromOffset(18, 18)
+	icon.Position = UDim2.new(0, 12, 0.5, 0)
+	icon.Size = UDim2.fromOffset(16, 16)
 	icon.BackgroundTransparency = 1
 	icon.BorderSizePixel = 0
+	icon.Image = asset
+	icon.ImageColor3 = Color3.fromRGB(116, 116, 121)
+	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 5
 	icon.Parent = parent
-
-	renderer(icon, Color3.fromRGB(96, 96, 101), 6)
 
 	return icon, normalizedName
 end
@@ -346,9 +178,17 @@ local function updateTabStyle(tab)
 	if tab.Selected then
 		tab.Button.BackgroundTransparency = 0
 		tab.Button.TextColor3 = Color3.fromRGB(42, 42, 45)
+
+		if tab.IconFrame then
+			tab.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
+		end
 	else
 		tab.Button.BackgroundTransparency = 1
 		tab.Button.TextColor3 = Color3.fromRGB(116, 116, 121)
+
+		if tab.IconFrame then
+			tab.IconFrame.ImageColor3 = Color3.fromRGB(116, 116, 121)
+		end
 	end
 end
 
@@ -622,7 +462,7 @@ function Slate:CreateTab(tabOptions)
 
 	if tabIcon ~= nil then
 		iconFrame, iconName = createLucideIcon(tabButton, tabIcon)
-		tabTextPadding.PaddingLeft = UDim.new(0, 38)
+		tabTextPadding.PaddingLeft = UDim.new(0, 40)
 	end
 
 	local tabCorner = Instance.new("UICorner")
@@ -734,7 +574,11 @@ function Tab:SetIcon(iconName)
 
 	if iconName ~= nil then
 		self.IconFrame, self.Icon = createLucideIcon(self.Button, iconName)
-		self.TextPadding.PaddingLeft = UDim.new(0, 38)
+		self.TextPadding.PaddingLeft = UDim.new(0, 40)
+
+		if self.Selected then
+			self.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
+		end
 	end
 end
 
