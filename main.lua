@@ -112,14 +112,14 @@ function Slate:CreateWindow(options)
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screenGui.Parent = playerGui
 
-	local window = Instance.new("CanvasGroup")
+	local window = Instance.new("Frame")
 	window.Name = "Container"
 	window.AnchorPoint = Vector2.new(0.5, 0.5)
 	window.Position = options.Position or DefaultSettings.Position
 	window.Size = windowSize
 	window.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	window.BorderSizePixel = 0
-	window.GroupTransparency = 0
+	window.ClipsDescendants = true
 	window.Parent = screenGui
 
 	local windowCorner = Instance.new("UICorner")
@@ -130,7 +130,7 @@ function Slate:CreateWindow(options)
 	local topBar = Instance.new("Frame")
 	topBar.Name = "TopBar"
 	topBar.Size = UDim2.new(1, 0, 0, topBarHeight)
-	topBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	topBar.BackgroundTransparency = 1
 	topBar.BorderSizePixel = 0
 	topBar.ZIndex = 2
 	topBar.Parent = window
@@ -226,10 +226,33 @@ function Slate:CreateWindow(options)
 	sidebar.ZIndex = 1
 	sidebar.Parent = window
 
+	local sidebarCorner = Instance.new("UICorner")
+	sidebarCorner.Name = "Corner"
+	sidebarCorner.CornerRadius = UDim.new(0, cornerRadius)
+	sidebarCorner.Parent = sidebar
+
+	local sidebarFillWidth = math.min(cornerRadius, sidebarWidth)
+
+	local sidebarFill = Instance.new("Frame")
+	sidebarFill.Name = "Fill"
+	sidebarFill.Position = UDim2.fromOffset(sidebarWidth - sidebarFillWidth, 0)
+	sidebarFill.Size = UDim2.new(0, sidebarFillWidth, 1, 0)
+	sidebarFill.BackgroundColor3 = sidebar.BackgroundColor3
+	sidebarFill.BorderSizePixel = 0
+	sidebarFill.Parent = sidebar
+
+	local sidebarTopFill = Instance.new("Frame")
+	sidebarTopFill.Name = "TopFill"
+	sidebarTopFill.Size = UDim2.fromOffset(math.min(cornerRadius, sidebarWidth), cornerRadius)
+	sidebarTopFill.BackgroundColor3 = sidebar.BackgroundColor3
+	sidebarTopFill.BorderSizePixel = 0
+	sidebarTopFill.Parent = sidebar
+
 	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
 		TopBar = topBar,
+		Divider = divider,
 		Sidebar = sidebar,
 		MinimizeButton = minimizeButton,
 		CloseButton = closeButton,
@@ -259,6 +282,7 @@ function Slate:SetMinimized(isMinimized)
 
 	self.IsMinimized = isMinimized
 	self.Sidebar.Visible = not isMinimized
+	self.Divider.Visible = not isMinimized
 
 	local targetSize = self.ExpandedSize
 
