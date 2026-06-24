@@ -5,112 +5,105 @@ local UserInputService = game:GetService("UserInputService")
 local Slate = {}
 Slate.__index = Slate
 
-local DEFAULTS = {
+local cfg = {
 	Name = "Slate",
 	Size = {620, 420},
-	SidebarWidth = 160,
-	CornerRadius = 16,
-	Position = UDim2.fromScale(0.5, 0.5),
+	Side = 160,
+	Radius = 16,
+	Pos = UDim2.fromScale(0.5, 0.5),
 }
 
-local function getPlayerGui(customParent)
-	if customParent then
-		return customParent
+local function getGui(parent)
+	if parent then
+		return parent
 	end
 
 	local player = Players.LocalPlayer
 	if not player then
-		error("Slate must be required from a LocalScript.")
+		error("Slate must run from a LocalScript.")
 	end
 
 	return player:WaitForChild("PlayerGui")
 end
 
-local function makeSize(size)
-	size = size or DEFAULTS.Size
+local function toSize(value)
+	value = value or cfg.Size
 
-	if type(size) ~= "table" then
-		error("Slate Size must use {width, height}. Example: {700, 480}")
+	if type(value) ~= "table" then
+		error("Use Size = {width, height}.")
 	end
 
-	local width = size[1]
-	local height = size[2]
+	local x = value[1]
+	local y = value[2]
 
-	if type(width) ~= "number" or type(height) ~= "number" or width <= 0 or height <= 0 then
-		error("Slate Size values must be positive numbers. Example: {700, 480}")
+	if type(x) ~= "number" or type(y) ~= "number" or x <= 0 or y <= 0 then
+		error("Size needs two positive numbers.")
 	end
 
-	return UDim2.fromOffset(width, height)
+	return UDim2.fromOffset(x, y)
 end
 
-function Slate:CreateWindow(options)
-	options = options or {}
+function Slate:CreateWindow(data)
+	data = data or {}
 
-	local parent = getPlayerGui(options.Parent)
-	local name = options.Name or DEFAULTS.Name
-	local sidebarWidth = options.SidebarWidth or DEFAULTS.SidebarWidth
+	local host = getGui(data.Parent)
+	local title = data.Name or cfg.Name
+	local sideWidth = data.SidebarWidth or cfg.Side
 
-	if type(sidebarWidth) ~= "number" or sidebarWidth <= 0 then
-		error("Slate SidebarWidth must be a positive number.")
+	if type(sideWidth) ~= "number" or sideWidth <= 0 then
+		error("SidebarWidth must be a positive number.")
 	end
 
-	local oldGui = parent:FindFirstChild(name)
-	if oldGui then
-		oldGui:Destroy()
+	local old = host:FindFirstChild(title)
+	if old then
+		old:Destroy()
 	end
 
-	local gui = Instance.new("ScreenGui")
-	gui.Name = name
-	gui.IgnoreGuiInset = true
-	gui.ResetOnSpawn = false
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	gui.Parent = parent
+	local ui = Instance.new("ScreenGui")
+	ui.Name = title
+	ui.IgnoreGuiInset = true
+	ui.ResetOnSpawn = false
+	ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	ui.Parent = host
 
-	local container = Instance.new("Frame")
-	container.Name = "Container"
-	container.AnchorPoint = Vector2.new(0.5, 0.5)
-	container.Position = options.Position or DEFAULTS.Position
-	container.Size = makeSize(options.Size)
-	container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	container.BorderSizePixel = 0
-	container.ClipsDescendants = true
-	container.Parent = gui
+	local main = Instance.new("CanvasGroup")
+	main.Name = "Container"
+	main.AnchorPoint = Vector2.new(0.5, 0.5)
+	main.Position = data.Position or cfg.Pos
+	main.Size = toSize(data.Size)
+	main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	main.BorderSizePixel = 0
+	main.Parent = ui
 
-	local rootCorner = Instance.new("UICorner")
-	rootCorner.Name = "RootCorner"
-	rootCorner.CornerRadius = UDim.new(0, options.CornerRadius or DEFAULTS.CornerRadius)
-	rootCorner.Parent = container
+	local edge = Instance.new("UICorner")
+	edge.Name = "Corner"
+	edge.CornerRadius = UDim.new(0, data.CornerRadius or cfg.Radius)
+	edge.Parent = main
 
-	local sidebar = Instance.new("Frame")
-	sidebar.Name = "Sidebar"
-	sidebar.Position = UDim2.fromOffset(0, 0)
-	sidebar.Size = UDim2.new(0, sidebarWidth, 1, 0)
-	sidebar.BackgroundColor3 = Color3.fromRGB(247, 247, 248)
-	sidebar.BorderSizePixel = 0
-	sidebar.Parent = container
+	local rail = Instance.new("Frame")
+	rail.Name = "Sidebar"
+	rail.Size = UDim2.new(0, sideWidth, 1, 0)
+	rail.BackgroundColor3 = Color3.fromRGB(247, 247, 248)
+	rail.BorderSizePixel = 0
+	rail.Parent = main
 
 	return setmetatable({
-		Gui = gui,
-		Container = container,
-		Sidebar = sidebar,
-		Services = {
-			Players = Players,
-			TweenService = TweenService,
-			UserInputService = UserInputService,
-		},
+		Gui = ui,
+		Container = main,
+		Sidebar = rail,
 	}, Slate)
 end
 
-function Slate:SetSize(size)
-	self.Container.Size = makeSize(size)
+function Slate:SetSize(value)
+	self.Container.Size = toSize(value)
 end
 
 function Slate:GetSidebar()
 	return self.Sidebar
 end
 
-function Slate:SetVisible(visible)
-	self.Gui.Enabled = visible
+function Slate:SetVisible(state)
+	self.Gui.Enabled = state
 end
 
 function Slate:Destroy()
