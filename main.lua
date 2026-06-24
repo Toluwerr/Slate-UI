@@ -1,5 +1,4 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -16,7 +15,6 @@ Tab.__index = Tab
 
 Slate.Services = {
 	Players = Players,
-	ReplicatedStorage = ReplicatedStorage,
 	TweenService = TweenService,
 	UserInputService = UserInputService,
 	RunService = RunService,
@@ -33,6 +31,20 @@ local DefaultSettings = {
 	TopBarHeight = 46,
 	CornerRadius = 16,
 	Position = UDim2.fromScale(0.5, 0.5),
+}
+
+local lucide
+
+local IconAliases = {
+	home = "house",
+	dashboard = "layout-dashboard",
+	sliders = "sliders-horizontal",
+	slider = "sliders-horizontal",
+	security = "shield",
+	documents = "files",
+	alerts = "bell",
+	saved = "bookmark",
+	profile = "circle-user-round",
 }
 
 local function getPlayerGui(customParent)
@@ -77,19 +89,6 @@ local function getTabName(tabOptions)
 	error('CreateTab needs a name. Example: Window:CreateTab("Main")')
 end
 
-
-local IconAliases = {
-	home = "house",
-	dashboard = "layout-dashboard",
-	sliders = "sliders-horizontal",
-	slider = "sliders-horizontal",
-	security = "shield",
-	documents = "files",
-	alerts = "bell",
-	saved = "bookmark",
-	profile = "circle-user-round",
-}
-
 local function getTabIcon(tabOptions)
 	if type(tabOptions) == "table" then
 		return tabOptions.Icon
@@ -111,46 +110,42 @@ local function normalizeIconName(iconName)
 	return IconAliases[normalizedName] or normalizedName
 end
 
-local function validateLucide(lucide)
-	if type(lucide) ~= "table" or type(lucide.ImageLabel) ~= "function" then
-		error('Lucide must be the official lucide-roblox module.')
+local function getLucide()
+	if lucide then
+		return lucide
+	end
+
+	lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/notpoiu/lucide-roblox-direct/main/source.lua"))()
+
+	if type(lucide) ~= "table" or type(lucide.GetAsset) ~= "function" then
+		error("Lucide failed to load.")
 	end
 
 	return lucide
 end
 
-local function getLucide(window)
-	if window.Lucide then
-		return window.Lucide
-	end
-
-	if Slate.Lucide then
-		window.Lucide = Slate.Lucide
-		return window.Lucide
-	end
-
-	local lucideModule = ReplicatedStorage:FindFirstChild("Lucide")
-
-	if lucideModule and lucideModule:IsA("ModuleScript") then
-		window.Lucide = validateLucide(require(lucideModule))
-		return window.Lucide
-	end
-
-	error('Add the official lucide-roblox ModuleScript to ReplicatedStorage as "Lucide", or pass Lucide = require(...) to CreateWindow.')
-end
-
-local function createLucideIcon(parent, lucide, iconName)
+local function createLucideIcon(parent, iconName)
 	local normalizedName = normalizeIconName(iconName)
+	local asset = getLucide().GetAsset(normalizedName)
 
-	local icon = lucide.ImageLabel(normalizedName, 16, {
-		Name = normalizedName,
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 12, 0.5, 0),
-		BackgroundTransparency = 1,
-		ImageColor3 = Color3.fromRGB(116, 116, 121),
-		ZIndex = 5,
-		Parent = parent,
-	})
+	if not asset then
+		error('Unsupported Lucide icon "' .. iconName .. '".')
+	end
+
+	local icon = Instance.new("ImageLabel")
+	icon.Name = normalizedName
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 12, 0.5, 0)
+	icon.Size = UDim2.fromOffset(16, 16)
+	icon.BackgroundTransparency = 1
+	icon.BorderSizePixel = 0
+	icon.Image = asset.Url
+	icon.ImageRectSize = asset.ImageRectSize
+	icon.ImageRectOffset = asset.ImageRectOffset
+	icon.ImageColor3 = Color3.fromRGB(116, 116, 121)
+	icon.ScaleType = Enum.ScaleType.Fit
+	icon.ZIndex = 5
+	icon.Parent = parent
 
 	return icon, normalizedName
 end
@@ -399,12 +394,6 @@ function Slate:CreateWindow(options)
 	mainArea.ZIndex = 1
 	mainArea.Parent = window
 
-	local lucide = options.Lucide
-
-	if lucide ~= nil then
-		lucide = validateLucide(lucide)
-	end
-
 	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
@@ -413,7 +402,6 @@ function Slate:CreateWindow(options)
 		Sidebar = sidebar,
 		TabList = tabList,
 		MainArea = mainArea,
-		Lucide = lucide,
 		Tabs = {},
 		SelectedTab = nil,
 		MinimizeButton = minimizeButton,
@@ -463,7 +451,7 @@ function Slate:CreateTab(tabOptions)
 	local textLeft = 12
 
 	if tabIcon ~= nil then
-		iconFrame, iconName = createLucideIcon(tabButton, getLucide(self), tabIcon)
+		iconFrame, iconName = createLucideIcon(tabButton, tabIcon)
 		textLeft = 40
 	end
 
@@ -594,7 +582,7 @@ function Tab:SetIcon(iconName)
 		return
 	end
 
-	self.IconFrame, self.Icon = createLucideIcon(self.Button, getLucide(self.Window), iconName)
+	self.IconFrame, self.Icon = createLucideIcon(self.Button, iconName)
 	self.Label.Position = UDim2.fromOffset(40, 0)
 	self.Label.Size = UDim2.new(1, -52, 1, 0)
 
@@ -628,10 +616,6 @@ function Tab:Destroy()
 			window:SelectTab(window.Tabs[1])
 		end
 	end
-end
-
-function Slate:SetLucide(lucide)
-	self.Lucide = validateLucide(lucide)
 end
 
 function Slate:SetMinimized(isMinimized)
