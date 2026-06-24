@@ -266,6 +266,8 @@ function Slate:CreateWindow(options)
 		Gui = screenGui,
 		Container = window,
 		TopBar = topBar,
+		TopBarFill = topBarFill,
+		Divider = divider,
 		Sidebar = sidebar,
 		MinimizeButton = minimizeButton,
 		CloseButton = closeButton,
@@ -295,6 +297,8 @@ function Slate:SetMinimized(isMinimized)
 
 	self.IsMinimized = isMinimized
 	self.Sidebar.Visible = not isMinimized
+	self.TopBarFill.Visible = not isMinimized
+	self.Divider.Visible = not isMinimized
 
 	local targetSize = self.ExpandedSize
 
