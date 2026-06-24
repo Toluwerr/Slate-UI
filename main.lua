@@ -156,6 +156,7 @@ function Slate:CreateWindow(options)
 
 	local minimizeButton = Instance.new("TextButton")
 	minimizeButton.Name = "Minimize"
+	minimizeButton.LayoutOrder = 1
 	minimizeButton.Size = UDim2.fromOffset(28, 28)
 	minimizeButton.BackgroundColor3 = Color3.fromRGB(225, 225, 228)
 	minimizeButton.BackgroundTransparency = 1
@@ -179,6 +180,7 @@ function Slate:CreateWindow(options)
 
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "Close"
+	closeButton.LayoutOrder = 2
 	closeButton.Size = UDim2.fromOffset(28, 28)
 	closeButton.BackgroundColor3 = Color3.fromRGB(225, 225, 228)
 	closeButton.BackgroundTransparency = 1
