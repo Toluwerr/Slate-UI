@@ -259,6 +259,8 @@ function Slate:CreateWindow(options)
 		ExpandedSize = windowSize,
 		TopBarHeight = topBarHeight,
 		IsMinimized = false,
+		IsTransitioning = false,
+		ResizeTween = nil,
 	}, Slate)
 
 	setButtonHover(minimizeButton)
@@ -276,13 +278,21 @@ function Slate:CreateWindow(options)
 end
 
 function Slate:SetMinimized(isMinimized)
-	if self.IsMinimized == isMinimized then
+	if type(isMinimized) ~= "boolean" then
+		error("SetMinimized expects a boolean.")
+	end
+
+	if self.IsTransitioning or self.IsMinimized == isMinimized then
 		return
 	end
 
-	self.IsMinimized = isMinimized
-	self.Sidebar.Visible = not isMinimized
-	self.Divider.Visible = not isMinimized
+	self.IsTransitioning = true
+	self.MinimizeButton.Active = false
+
+	if not isMinimized then
+		self.Sidebar.Visible = true
+		self.Divider.Visible = true
+	end
 
 	local targetSize = self.ExpandedSize
 
@@ -290,14 +300,49 @@ function Slate:SetMinimized(isMinimized)
 		targetSize = UDim2.fromOffset(self.ExpandedSize.X.Offset, self.TopBarHeight)
 	end
 
-	TweenService:Create(
+	local resizeTween = TweenService:Create(
 		self.Container,
-		TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{Size = targetSize}
-	):Play()
+	)
+
+	self.ResizeTween = resizeTween
+
+	resizeTween.Completed:Connect(function(playbackState)
+		if self.ResizeTween ~= resizeTween then
+			return
+		end
+
+		self.ResizeTween = nil
+		self.IsTransitioning = false
+
+		if playbackState ~= Enum.PlaybackState.Completed then
+			if self.MinimizeButton and self.MinimizeButton.Parent then
+				self.MinimizeButton.Active = true
+			end
+			return
+		end
+
+		self.IsMinimized = isMinimized
+
+		if isMinimized then
+			self.Sidebar.Visible = false
+			self.Divider.Visible = false
+		end
+
+		if self.MinimizeButton and self.MinimizeButton.Parent then
+			self.MinimizeButton.Active = true
+		end
+	end)
+
+	resizeTween:Play()
 end
 
 function Slate:ToggleMinimize()
+	if self.IsTransitioning then
+		return
+	end
+
 	self:SetMinimized(not self.IsMinimized)
 end
 
@@ -305,7 +350,7 @@ function Slate:SetSize(size)
 	local windowSize = getWindowSize(size)
 	self.ExpandedSize = windowSize
 
-	if not self.IsMinimized then
+	if not self.IsMinimized and not self.IsTransitioning then
 		self.Container.Size = windowSize
 	end
 end
@@ -319,8 +364,14 @@ function Slate:SetVisible(isVisible)
 end
 
 function Slate:Destroy()
+	if self.ResizeTween then
+		self.ResizeTween:Cancel()
+		self.ResizeTween = nil
+	end
+
 	if self.Gui then
 		self.Gui:Destroy()
+		self.Gui = nil
 	end
 end
 
