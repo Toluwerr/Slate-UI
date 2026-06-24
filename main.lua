@@ -43,12 +43,12 @@ local function getWindowSize(size)
 	return UDim2.fromOffset(width, height), width, height
 end
 
-local function setButtonHover(button)
+local function setHover(button)
 	button.MouseEnter:Connect(function()
 		TweenService:Create(
 			button,
 			TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{BackgroundTransparency = 0.92}
+			{BackgroundTransparency = 0.9}
 		):Play()
 	end)
 
@@ -139,86 +139,70 @@ function Slate:CreateWindow(options)
 	divider.BorderSizePixel = 0
 	divider.Parent = topBar
 
-	local controlArea = Instance.new("Frame")
-	controlArea.Name = "Controls"
-	controlArea.AnchorPoint = Vector2.new(1, 0.5)
-	controlArea.Position = UDim2.new(1, -12, 0.5, 0)
-	controlArea.Size = UDim2.fromOffset(62, 28)
-	controlArea.BackgroundTransparency = 1
-	controlArea.Parent = topBar
-
-	local controlLayout = Instance.new("UIListLayout")
-	controlLayout.FillDirection = Enum.FillDirection.Horizontal
-	controlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-	controlLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	controlLayout.Padding = UDim.new(0, 6)
-	controlLayout.Parent = controlArea
-
 	local minimizeButton = Instance.new("TextButton")
 	minimizeButton.Name = "Minimize"
-	minimizeButton.LayoutOrder = 1
+	minimizeButton.AnchorPoint = Vector2.new(1, 0.5)
+	minimizeButton.Position = UDim2.new(1, -48, 0.5, 0)
 	minimizeButton.Size = UDim2.fromOffset(28, 28)
-	minimizeButton.BackgroundColor3 = Color3.fromRGB(225, 225, 228)
+	minimizeButton.BackgroundColor3 = Color3.fromRGB(220, 220, 223)
 	minimizeButton.BackgroundTransparency = 1
 	minimizeButton.BorderSizePixel = 0
 	minimizeButton.AutoButtonColor = false
 	minimizeButton.Text = ""
-	minimizeButton.Parent = controlArea
+	minimizeButton.Parent = topBar
 
 	local minimizeIcon = Instance.new("Frame")
 	minimizeIcon.Name = "Icon"
 	minimizeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
 	minimizeIcon.Position = UDim2.fromScale(0.5, 0.5)
 	minimizeIcon.Size = UDim2.fromOffset(12, 2)
-	minimizeIcon.BackgroundColor3 = Color3.fromRGB(68, 68, 72)
+	minimizeIcon.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
 	minimizeIcon.BorderSizePixel = 0
 	minimizeIcon.Parent = minimizeButton
 
-	local minimizeIconCorner = Instance.new("UICorner")
-	minimizeIconCorner.CornerRadius = UDim.new(1, 0)
-	minimizeIconCorner.Parent = minimizeIcon
+	local minimizeCorner = Instance.new("UICorner")
+	minimizeCorner.CornerRadius = UDim.new(1, 0)
+	minimizeCorner.Parent = minimizeIcon
 
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "Close"
-	closeButton.LayoutOrder = 2
+	closeButton.AnchorPoint = Vector2.new(1, 0.5)
+	closeButton.Position = UDim2.new(1, -12, 0.5, 0)
 	closeButton.Size = UDim2.fromOffset(28, 28)
-	closeButton.BackgroundColor3 = Color3.fromRGB(225, 225, 228)
+	closeButton.BackgroundColor3 = Color3.fromRGB(220, 220, 223)
 	closeButton.BackgroundTransparency = 1
 	closeButton.BorderSizePixel = 0
 	closeButton.AutoButtonColor = false
 	closeButton.Text = ""
-	closeButton.Parent = controlArea
+	closeButton.Parent = topBar
 
-	local closeIconLeft = Instance.new("Frame")
-	closeIconLeft.Name = "Line"
-	closeIconLeft.AnchorPoint = Vector2.new(0.5, 0.5)
-	closeIconLeft.Position = UDim2.fromScale(0.5, 0.5)
-	closeIconLeft.Size = UDim2.fromOffset(14, 2)
-	closeIconLeft.Rotation = 45
-	closeIconLeft.BackgroundColor3 = Color3.fromRGB(68, 68, 72)
-	closeIconLeft.BorderSizePixel = 0
-	closeIconLeft.Parent = closeButton
+	local closeLineOne = Instance.new("Frame")
+	closeLineOne.Name = "Line"
+	closeLineOne.AnchorPoint = Vector2.new(0.5, 0.5)
+	closeLineOne.Position = UDim2.fromScale(0.5, 0.5)
+	closeLineOne.Size = UDim2.fromOffset(14, 2)
+	closeLineOne.Rotation = 45
+	closeLineOne.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
+	closeLineOne.BorderSizePixel = 0
+	closeLineOne.Parent = closeButton
 
-	local closeIconLeftCorner = Instance.new("UICorner")
-	closeIconLeftCorner.CornerRadius = UDim.new(1, 0)
-	closeIconLeftCorner.Parent = closeIconLeft
+	local closeLineOneCorner = Instance.new("UICorner")
+	closeLineOneCorner.CornerRadius = UDim.new(1, 0)
+	closeLineOneCorner.Parent = closeLineOne
 
-	local closeIconRight = Instance.new("Frame")
-	closeIconRight.Name = "Line"
-	closeIconRight.AnchorPoint = Vector2.new(0.5, 0.5)
-	closeIconRight.Position = UDim2.fromScale(0.5, 0.5)
-	closeIconRight.Size = UDim2.fromOffset(14, 2)
-	closeIconRight.Rotation = -45
-	closeIconRight.BackgroundColor3 = Color3.fromRGB(68, 68, 72)
-	closeIconRight.BorderSizePixel = 0
-	closeIconRight.Parent = closeButton
+	local closeLineTwo = Instance.new("Frame")
+	closeLineTwo.Name = "Line"
+	closeLineTwo.AnchorPoint = Vector2.new(0.5, 0.5)
+	closeLineTwo.Position = UDim2.fromScale(0.5, 0.5)
+	closeLineTwo.Size = UDim2.fromOffset(14, 2)
+	closeLineTwo.Rotation = -45
+	closeLineTwo.BackgroundColor3 = Color3.fromRGB(66, 66, 70)
+	closeLineTwo.BorderSizePixel = 0
+	closeLineTwo.Parent = closeButton
 
-	local closeIconRightCorner = Instance.new("UICorner")
-	closeIconRightCorner.CornerRadius = UDim.new(1, 0)
-	closeIconRightCorner.Parent = closeIconRight
-
-	setButtonHover(minimizeButton)
-	setButtonHover(closeButton)
+	local closeLineTwoCorner = Instance.new("UICorner")
+	closeLineTwoCorner.CornerRadius = UDim.new(1, 0)
+	closeLineTwoCorner.Parent = closeLineTwo
 
 	local sidebar = Instance.new("Frame")
 	sidebar.Name = "Sidebar"
@@ -250,19 +234,58 @@ function Slate:CreateWindow(options)
 	sidebarTopFill.BorderSizePixel = 0
 	sidebarTopFill.Parent = sidebar
 
-	return setmetatable({
+	local windowObject = setmetatable({
 		Gui = screenGui,
 		Container = window,
 		TopBar = topBar,
 		Sidebar = sidebar,
 		MinimizeButton = minimizeButton,
 		CloseButton = closeButton,
+		ExpandedSize = windowSize,
+		TopBarHeight = topBarHeight,
+		Minimized = false,
 	}, Slate)
+
+	setHover(minimizeButton)
+	setHover(closeButton)
+
+	minimizeButton.Activated:Connect(function()
+		windowObject:ToggleMinimize()
+	end)
+
+	closeButton.Activated:Connect(function()
+		windowObject:Destroy()
+	end)
+
+	return windowObject
+end
+
+function Slate:ToggleMinimize()
+	self.Minimized = not self.Minimized
+	self.Sidebar.Visible = not self.Minimized
+
+	local targetSize
+
+	if self.Minimized then
+		targetSize = UDim2.fromOffset(self.ExpandedSize.X.Offset, self.TopBarHeight)
+	else
+		targetSize = self.ExpandedSize
+	end
+
+	TweenService:Create(
+		self.Container,
+		TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{Size = targetSize}
+	):Play()
 end
 
 function Slate:SetSize(size)
 	local windowSize = getWindowSize(size)
-	self.Container.Size = windowSize
+	self.ExpandedSize = windowSize
+
+	if not self.Minimized then
+		self.Container.Size = windowSize
+	end
 end
 
 function Slate:GetSidebar()
