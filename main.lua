@@ -16,6 +16,9 @@ Tab.__index = Tab
 local Section = {}
 Section.__index = Section
 
+local Button = {}
+Button.__index = Button
+
 Slate.Services = {
 	Players = Players,
 	TweenService = TweenService,
@@ -104,6 +107,18 @@ local function getSectionName(sectionOptions)
 	end
 
 	error('CreateSection needs a name. Example: Tab:CreateSection("General")')
+end
+
+local function getButtonOptions(buttonOptions)
+	if type(buttonOptions) == "string" then
+		return buttonOptions, nil
+	end
+
+	if type(buttonOptions) == "table" then
+		return buttonOptions.Name, buttonOptions.Callback
+	end
+
+	error('CreateButton needs a name. Example: Section:CreateButton("Execute")')
 end
 
 
@@ -768,6 +783,162 @@ end
 
 function Tab:GetSections()
 	return self.Sections
+end
+
+function Section:CreateButton(buttonOptions)
+	local buttonName, callback = getButtonOptions(buttonOptions)
+
+	if type(buttonName) ~= "string" or buttonName == "" then
+		error("Button names must be non-empty strings.")
+	end
+
+	if callback ~= nil and type(callback) ~= "function" then
+		error("Button callbacks must be functions.")
+	end
+
+	local buttonFrame = Instance.new("TextButton")
+	buttonFrame.Name = buttonName
+	buttonFrame.Size = UDim2.new(1, 0, 0, 38)
+	buttonFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 242)
+	buttonFrame.BorderSizePixel = 0
+	buttonFrame.AutoButtonColor = false
+	buttonFrame.Text = buttonName
+	buttonFrame.TextColor3 = Color3.fromRGB(52, 52, 56)
+	buttonFrame.Font = Enum.Font.GothamMedium
+	buttonFrame.TextSize = 13
+	buttonFrame.TextXAlignment = Enum.TextXAlignment.Left
+	buttonFrame.ZIndex = 4
+	buttonFrame.Parent = self.Content
+
+	local buttonPadding = Instance.new("UIPadding")
+	buttonPadding.PaddingLeft = UDim.new(0, 12)
+	buttonPadding.PaddingRight = UDim.new(0, 12)
+	buttonPadding.Parent = buttonFrame
+
+	local buttonCorner = Instance.new("UICorner")
+	buttonCorner.CornerRadius = UDim.new(0, 8)
+	buttonCorner.Parent = buttonFrame
+
+	local buttonObject = setmetatable({
+		Name = buttonName,
+		Frame = buttonFrame,
+		Section = self,
+		Callback = callback,
+		Enabled = true,
+		PressTween = nil,
+	}, Button)
+
+	buttonFrame.MouseEnter:Connect(function()
+		if not buttonObject.Enabled then
+			return
+		end
+
+		TweenService:Create(
+			buttonFrame,
+			TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{BackgroundColor3 = Color3.fromRGB(232, 232, 235)}
+		):Play()
+	end)
+
+	buttonFrame.MouseLeave:Connect(function()
+		if not buttonObject.Enabled then
+			return
+		end
+
+		TweenService:Create(
+			buttonFrame,
+			TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{BackgroundColor3 = Color3.fromRGB(240, 240, 242)}
+		):Play()
+	end)
+
+	buttonFrame.Activated:Connect(function()
+		if not buttonObject.Enabled then
+			return
+		end
+
+		if buttonObject.PressTween then
+			buttonObject.PressTween:Cancel()
+		end
+
+		buttonFrame.BackgroundColor3 = Color3.fromRGB(224, 224, 228)
+
+		local pressTween = TweenService:Create(
+			buttonFrame,
+			TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{BackgroundColor3 = Color3.fromRGB(240, 240, 242)}
+		)
+
+		buttonObject.PressTween = pressTween
+		pressTween:Play()
+
+		if buttonObject.Callback then
+			task.spawn(function()
+				local success, message = xpcall(buttonObject.Callback, debug.traceback)
+
+				if not success then
+					warn(message)
+				end
+			end)
+		end
+	end)
+
+	return buttonObject
+end
+
+function Section:GetButtons()
+	local buttons = {}
+
+	for _, child in ipairs(self.Content:GetChildren()) do
+		if child:IsA("TextButton") then
+			table.insert(buttons, child)
+		end
+	end
+
+	return buttons
+end
+
+function Button:SetName(name)
+	if type(name) ~= "string" or name == "" then
+		error("Button names must be non-empty strings.")
+	end
+
+	self.Name = name
+	self.Frame.Name = name
+	self.Frame.Text = name
+end
+
+function Button:SetCallback(callback)
+	if callback ~= nil and type(callback) ~= "function" then
+		error("Button callbacks must be functions or nil.")
+	end
+
+	self.Callback = callback
+end
+
+function Button:SetEnabled(isEnabled)
+	if type(isEnabled) ~= "boolean" then
+		error("SetEnabled expects a boolean.")
+	end
+
+	self.Enabled = isEnabled
+	self.Frame.Active = isEnabled
+	self.Frame.TextTransparency = isEnabled and 0 or 0.45
+	self.Frame.BackgroundColor3 = isEnabled
+		and Color3.fromRGB(240, 240, 242)
+		or Color3.fromRGB(246, 246, 247)
+end
+
+function Button:Destroy()
+	if self.PressTween then
+		self.PressTween:Cancel()
+		self.PressTween = nil
+	end
+
+	if self.Frame then
+		self.Frame:Destroy()
+		self.Frame = nil
+	end
 end
 
 function Section:GetContent()
