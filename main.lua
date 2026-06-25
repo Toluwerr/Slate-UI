@@ -13,6 +13,9 @@ Slate.__index = Slate
 local Tab = {}
 Tab.__index = Tab
 
+local Section = {}
+Section.__index = Section
+
 Slate.Services = {
 	Players = Players,
 	TweenService = TweenService,
@@ -91,6 +94,18 @@ local function getTabName(tabOptions)
 
 	error('CreateTab needs a name. Example: Window:CreateTab("Main")')
 end
+local function getSectionName(sectionOptions)
+	if type(sectionOptions) == "string" then
+		return sectionOptions
+	end
+
+	if type(sectionOptions) == "table" then
+		return sectionOptions.Name
+	end
+
+	error('CreateSection needs a name. Example: Tab:CreateSection("General")')
+end
+
 
 local function getTabIcon(tabOptions)
 	if type(tabOptions) == "table" then
@@ -578,14 +593,29 @@ function Slate:CreateTab(tabOptions)
 	tabCorner.CornerRadius = UDim.new(0, 8)
 	tabCorner.Parent = tabButton
 
-	local page = Instance.new("Frame")
+	local page = Instance.new("ScrollingFrame")
 	page.Name = tabName .. "Page"
 	page.Size = UDim2.fromScale(1, 1)
 	page.BackgroundTransparency = 1
 	page.BorderSizePixel = 0
+	page.CanvasSize = UDim2.fromOffset(0, 0)
+	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	page.ScrollBarThickness = 0
 	page.Visible = false
 	page.ZIndex = 2
 	page.Parent = self.MainArea
+
+	local pagePadding = Instance.new("UIPadding")
+	pagePadding.PaddingTop = UDim.new(0, 16)
+	pagePadding.PaddingBottom = UDim.new(0, 16)
+	pagePadding.PaddingLeft = UDim.new(0, 16)
+	pagePadding.PaddingRight = UDim.new(0, 16)
+	pagePadding.Parent = page
+
+	local pageLayout = Instance.new("UIListLayout")
+	pageLayout.Padding = UDim.new(0, 16)
+	pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	pageLayout.Parent = page
 
 	local tabObject = setmetatable({
 		Name = tabName,
@@ -595,6 +625,7 @@ function Slate:CreateTab(tabOptions)
 		Button = tabButton,
 		Label = tabLabel,
 		Page = page,
+		Sections = {},
 		Window = self,
 		Selected = false,
 	}, Tab)
@@ -662,6 +693,113 @@ function Tab:GetPage()
 	return self.Page
 end
 
+function Tab:CreateSection(sectionOptions)
+	local sectionName = getSectionName(sectionOptions)
+
+	if type(sectionName) ~= "string" or sectionName == "" then
+		error("Section names must be non-empty strings.")
+	end
+
+	local sectionFrame = Instance.new("Frame")
+	sectionFrame.Name = sectionName
+	sectionFrame.Size = UDim2.new(1, 0, 0, 0)
+	sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+	sectionFrame.BackgroundTransparency = 1
+	sectionFrame.BorderSizePixel = 0
+	sectionFrame.ZIndex = 3
+	sectionFrame.Parent = self.Page
+
+	local sectionLayout = Instance.new("UIListLayout")
+	sectionLayout.Padding = UDim.new(0, 8)
+	sectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	sectionLayout.Parent = sectionFrame
+
+	local sectionTitle = Instance.new("TextLabel")
+	sectionTitle.Name = "Title"
+	sectionTitle.Size = UDim2.new(1, 0, 0, 18)
+	sectionTitle.BackgroundTransparency = 1
+	sectionTitle.BorderSizePixel = 0
+	sectionTitle.Text = sectionName
+	sectionTitle.TextColor3 = Color3.fromRGB(72, 72, 77)
+	sectionTitle.Font = Enum.Font.GothamSemibold
+	sectionTitle.TextSize = 12
+	sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+	sectionTitle.TextYAlignment = Enum.TextYAlignment.Center
+	sectionTitle.ZIndex = 4
+	sectionTitle.Parent = sectionFrame
+
+	local sectionContent = Instance.new("Frame")
+	sectionContent.Name = "Content"
+	sectionContent.Size = UDim2.new(1, 0, 0, 0)
+	sectionContent.AutomaticSize = Enum.AutomaticSize.Y
+	sectionContent.BackgroundColor3 = Color3.fromRGB(250, 250, 251)
+	sectionContent.BorderSizePixel = 0
+	sectionContent.ZIndex = 3
+	sectionContent.Parent = sectionFrame
+
+	local sectionCorner = Instance.new("UICorner")
+	sectionCorner.CornerRadius = UDim.new(0, 10)
+	sectionCorner.Parent = sectionContent
+
+	local contentPadding = Instance.new("UIPadding")
+	contentPadding.PaddingTop = UDim.new(0, 12)
+	contentPadding.PaddingBottom = UDim.new(0, 12)
+	contentPadding.PaddingLeft = UDim.new(0, 12)
+	contentPadding.PaddingRight = UDim.new(0, 12)
+	contentPadding.Parent = sectionContent
+
+	local contentLayout = Instance.new("UIListLayout")
+	contentLayout.Padding = UDim.new(0, 8)
+	contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	contentLayout.Parent = sectionContent
+
+	local sectionObject = setmetatable({
+		Name = sectionName,
+		Frame = sectionFrame,
+		Title = sectionTitle,
+		Content = sectionContent,
+		Tab = self,
+	}, Section)
+
+	table.insert(self.Sections, sectionObject)
+
+	return sectionObject
+end
+
+function Tab:GetSections()
+	return self.Sections
+end
+
+function Section:GetContent()
+	return self.Content
+end
+
+function Section:SetName(name)
+	if type(name) ~= "string" or name == "" then
+		error("Section names must be non-empty strings.")
+	end
+
+	self.Name = name
+	self.Frame.Name = name
+	self.Title.Text = name
+end
+
+function Section:Destroy()
+	local tab = self.Tab
+
+	for index, currentSection in ipairs(tab.Sections) do
+		if currentSection == self then
+			table.remove(tab.Sections, index)
+			break
+		end
+	end
+
+	if self.Frame then
+		self.Frame:Destroy()
+		self.Frame = nil
+	end
+end
+
 function Tab:SetName(name)
 	if type(name) ~= "string" or name == "" then
 		error("Tab names must be non-empty strings.")
@@ -695,6 +833,10 @@ end
 
 function Tab:Destroy()
 	local window = self.Window
+
+	for index = #self.Sections, 1, -1 do
+		self.Sections[index]:Destroy()
+	end
 
 	for index, currentTab in ipairs(window.Tabs) do
 		if currentTab == self then
