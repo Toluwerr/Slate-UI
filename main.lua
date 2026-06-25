@@ -34,6 +34,8 @@ local DefaultSettings = {
 }
 
 local lucide
+local lucideLoading = false
+local pendingIcons = {}
 
 local IconAliases = {
 	home = "house",
@@ -110,26 +112,43 @@ local function normalizeIconName(iconName)
 	return IconAliases[normalizedName] or normalizedName
 end
 
+local function isLucideLibrary(value)
+	return type(value) == "table" and type(value.GetAsset) == "function"
+end
+
+local function getSharedEnvironment()
+	if type(getgenv) == "function" then
+		return getgenv()
+	end
+
+	return _G
+end
+
 local function getLucide()
 	if lucide then
 		return lucide
 	end
 
-	lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/notpoiu/lucide-roblox-direct/main/source.lua"))()
+	local cachedLucide = getSharedEnvironment().__SlateLucide
 
-	if type(lucide) ~= "table" or type(lucide.GetAsset) ~= "function" then
-		error("Lucide failed to load.")
+	if isLucideLibrary(cachedLucide) then
+		lucide = cachedLucide
+		return lucide
 	end
-
-	return lucide
 end
 
 local function createLucideIcon(parent, iconName)
+	local library = getLucide()
+
+	if not library then
+		return nil
+	end
+
 	local normalizedName = normalizeIconName(iconName)
-	local asset = getLucide().GetAsset(normalizedName)
+	local asset = library.GetAsset(normalizedName)
 
 	if not asset then
-		error('Unsupported Lucide icon "' .. iconName .. '".')
+		return nil
 	end
 
 	local icon = Instance.new("ImageLabel")
@@ -148,6 +167,84 @@ local function createLucideIcon(parent, iconName)
 	icon.Parent = parent
 
 	return icon, normalizedName
+end
+
+local function applyTabIcon(tab)
+	if not tab or not tab.Button or not tab.Button.Parent or not tab.IconName then
+		return
+	end
+
+	local iconFrame, iconName = createLucideIcon(tab.Button, tab.IconName)
+
+	if not iconFrame then
+		return
+	end
+
+	if tab.IconFrame then
+		tab.IconFrame:Destroy()
+	end
+
+	tab.IconFrame = iconFrame
+	tab.Icon = iconName
+	tab.Label.Position = UDim2.fromOffset(40, 0)
+	tab.Label.Size = UDim2.new(1, -52, 1, 0)
+
+	if tab.Selected then
+		tab.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
+	end
+end
+
+local function finishLucideLoad()
+	local queuedTabs = pendingIcons
+	pendingIcons = {}
+
+	for tab in pairs(queuedTabs) do
+		applyTabIcon(tab)
+	end
+end
+
+local function loadLucideAsync()
+	if getLucide() then
+		finishLucideLoad()
+		return
+	end
+
+	if lucideLoading then
+		return
+	end
+
+	lucideLoading = true
+
+	task.spawn(function()
+		local success, library = pcall(function()
+			return loadstring(game:HttpGet("https://raw.githubusercontent.com/notpoiu/lucide-roblox-direct/main/source.lua"))()
+		end)
+
+		if success and isLucideLibrary(library) then
+			lucide = library
+			getSharedEnvironment().__SlateLucide = library
+		end
+
+		lucideLoading = false
+
+		if lucide then
+			finishLucideLoad()
+		end
+	end)
+end
+
+local function requestTabIcon(tab)
+	if not tab or not tab.IconName then
+		return
+	end
+
+	if getLucide() then
+		applyTabIcon(tab)
+		return
+	end
+
+	pendingIcons[tab] = true
+	loadLucideAsync()
 end
 
 local function setButtonHover(button)
@@ -415,6 +512,7 @@ function Slate:CreateWindow(options)
 
 	setButtonHover(minimizeButton)
 	setButtonHover(closeButton)
+	loadLucideAsync()
 
 	minimizeButton.Activated:Connect(function()
 		windowObject:ToggleMinimize()
@@ -446,19 +544,10 @@ function Slate:CreateTab(tabOptions)
 	tabButton.ZIndex = 4
 	tabButton.Parent = self.TabList
 
-	local iconFrame
-	local iconName
-	local textLeft = 12
-
-	if tabIcon ~= nil then
-		iconFrame, iconName = createLucideIcon(tabButton, tabIcon)
-		textLeft = 40
-	end
-
 	local tabLabel = Instance.new("TextLabel")
 	tabLabel.Name = "Label"
-	tabLabel.Position = UDim2.fromOffset(textLeft, 0)
-	tabLabel.Size = UDim2.new(1, -textLeft - 12, 1, 0)
+	tabLabel.Position = UDim2.fromOffset(12, 0)
+	tabLabel.Size = UDim2.new(1, -24, 1, 0)
 	tabLabel.BackgroundTransparency = 1
 	tabLabel.BorderSizePixel = 0
 	tabLabel.Text = tabName
@@ -485,14 +574,19 @@ function Slate:CreateTab(tabOptions)
 
 	local tabObject = setmetatable({
 		Name = tabName,
-		Icon = iconName,
-		IconFrame = iconFrame,
+		IconName = tabIcon,
+		Icon = nil,
+		IconFrame = nil,
 		Button = tabButton,
 		Label = tabLabel,
 		Page = page,
 		Window = self,
 		Selected = false,
 	}, Tab)
+
+	if tabIcon ~= nil then
+		requestTabIcon(tabObject)
+	end
 
 	tabButton.MouseEnter:Connect(function()
 		if not tabObject.Selected then
@@ -574,20 +668,13 @@ function Tab:SetIcon(iconName)
 		self.IconFrame = nil
 	end
 
+	self.IconName = iconName
 	self.Icon = nil
+	self.Label.Position = UDim2.fromOffset(12, 0)
+	self.Label.Size = UDim2.new(1, -24, 1, 0)
 
-	if iconName == nil then
-		self.Label.Position = UDim2.fromOffset(12, 0)
-		self.Label.Size = UDim2.new(1, -24, 1, 0)
-		return
-	end
-
-	self.IconFrame, self.Icon = createLucideIcon(self.Button, iconName)
-	self.Label.Position = UDim2.fromOffset(40, 0)
-	self.Label.Size = UDim2.new(1, -52, 1, 0)
-
-	if self.Selected then
-		self.IconFrame.ImageColor3 = Color3.fromRGB(42, 42, 45)
+	if iconName ~= nil then
+		requestTabIcon(self)
 	end
 end
 
